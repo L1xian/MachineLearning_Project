@@ -1,32 +1,36 @@
 # Imports
+
+import re
 import numpy as np
 import pandas as pd
-import re
 import seaborn as sns
 import matplotlib.pyplot as plt
+import warnings
+import joblib
+
 from imblearn.over_sampling import RandomOverSampler
 from matplotlib.colors import ListedColormap
+
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.impute import SimpleImputer
 from sklearn.manifold import TSNE
-from sklearn.metrics import (
-    accuracy_score, classification_report, confusion_matrix,
-    f1_score, hinge_loss, precision_score, recall_score )
+from sklearn.metrics import (accuracy_score, classification_report, confusion_matrix,f1_score, hinge_loss, precision_score, recall_score )
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-import warnings
+
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import joblib
 
+### 1: Data Analysis and Visualization
 
 # ## Step 1: Data Collection
 # Loading the dataset
@@ -55,8 +59,6 @@ sns.barplot(x=disaster_type_counts, y=disaster_type_counts.index)
 # Displaying the frequency count
 for index, value in enumerate(disaster_type_counts):
     plt.text(value, index, str(value), va='center', fontsize=10, color='black', ha='left')
-
-# Setting x and y labels and Title for the plot
 plt.title('Distribution of Disaster Types')
 plt.xlabel('Count')
 plt.ylabel('Disaster Type')
@@ -68,7 +70,6 @@ correlation_matrix = data.corr()
 sns.heatmap(correlation_matrix, annot=True, cmap='magma', fmt='.2f')
 plt.title('Correlation Heatmap')
 plt.show()
-
 
 # Time series analysis for the count of each top 5 disaster types over the years
 plt.figure(figsize=(14, 8))
@@ -87,8 +88,7 @@ plt.legend()
 plt.show()
 
 
-# ## Step 2: Data Preprocessing
-
+### 2: Data Preprocessing
 # Checking for Missing values
 print("Null values:")
 print(data.isnull().sum())
@@ -142,39 +142,23 @@ print(X_selected.columns)
 selected_features = [
     'Year',  'Dis Mag Scale','Dis Mag Value', 'Country', 'Longitude', 'Latitude', 'Disaster Type'
 ]
-
 data_selected = data[selected_features]
 # Save the new CSV file as preprocessed_data.csv
 data_selected.to_csv('preprocessed_data.csv', index=False)
 
 # Load the preprocessed_data.csv file
 data_selected = pd.read_csv('preprocessed_data.csv')
-
-
 data_selected.head(10)
-
-
-# In[19]:
-
-
-# Checking for missing values in the new csv file
 print(data_selected.isnull().sum())
 
 
 # ## Step 4: Model Development
-
-# ### i. Random Forest
-
-# In[20]:
-
-
+# 1/Random Forest Classifier
 # Separating feature set and target variable
 X = data_selected.drop('Disaster Type', axis=1)
 y = data_selected['Disaster Type']
-
 # Splitting the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 # Training the Random Forest model
 rf_model = RandomForestClassifier(
     n_estimators=50,  # Number of trees in the forest
@@ -183,52 +167,35 @@ rf_model = RandomForestClassifier(
     min_samples_leaf=1,   # Minimum number of samples required to be at a leaf node
     random_state=42
 )
-
 # Model Fitting
 rf_model.fit(X_train, y_train)
-
 y_pred = rf_model.predict(X_test)
-
 # Evaluation of the model
 print("Random Forest Classifier:")
 print("Accuracy:", accuracy_score(y_test, y_pred))
 
-
-# ### ii. Support Vector Machine
-
-# In[21]:
-
-
+# 2/Support Vector Machine
 # Separating feature set and target variable
 X = data_selected.drop('Disaster Type', axis=1)
 y = data_selected['Disaster Type']
-
 # Splitting the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 # Training the Support Vector Machine model
 svm_model = SVC(random_state=42)
 svm_model.fit(X_train, y_train)
-
 y_pred_svm = svm_model.predict(X_test)
-
 # Evaluate the SVM model
 print("Support Vector Machine (SVM):")
 print("Accuracy:", accuracy_score(y_test, y_pred_svm))
 
 
-# ### iii. K- Nearest Neighbor
-
-# In[22]:
-
+# 3/K-NN
 
 # Separating feature set and target variable
 X = data_selected.drop('Disaster Type', axis=1)
 y = data_selected['Disaster Type']
-
 # Splitting the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 # Training the K-Nearest Neighbors model
 knn_model = KNeighborsClassifier(
     n_neighbors=5,  # Number of neighbors to use
@@ -236,19 +203,13 @@ knn_model = KNeighborsClassifier(
     algorithm='auto',  # Algorithm used to compute the nearest neighbors
 )
 knn_model.fit(X_train, y_train)
-
 y_pred_knn = knn_model.predict(X_test)
-
 # Evaluation of the KNN model
 print("K-Nearest Neighbors (KNN):")
 print("Accuracy:", accuracy_score(y_test, y_pred_knn))
 
 
-# ### iv. Navie Bayes
-
-# In[23]:
-
-
+# 4/Navie Bayes
 # Separate feature set and target variable
 X = data_selected.drop('Disaster Type', axis=1)
 y = data_selected['Disaster Type']
@@ -259,7 +220,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 # Training the Naive Bayes model
 nb_model = GaussianNB()
 nb_model.fit(X_train, y_train)
-
 y_pred_nb = nb_model.predict(X_test)
 
 # Evaluation of the Naive Bayes model
@@ -267,10 +227,7 @@ print("Naive Bayes:")
 print("Accuracy:", accuracy_score(y_test, y_pred_nb))
 
 
-# ## Step 5: Model Evaluation
-
-# In[24]:
-
+# Evaluation
 
 # Evaluating the performance of Random Forest
 print("Random Forest Classifier Evaluation Metrics:")
@@ -306,20 +263,8 @@ print("\n")
 
 
 # ## Step 6: Tuning
-
-# #### As some of our models did not perform well, we checking whether our data is balaned or not
-
-# In[25]:
-
-
 # Checking the class distribution
 print(data_selected['Disaster Type'].value_counts())
-
-
-# #### Our data is not balanced, so to balance our data we are using Random Oversampler Technique
-
-# In[26]:
-
 
 # Separating feature set and target variable
 X = data_selected.drop('Disaster Type', axis=1)
@@ -331,18 +276,8 @@ oversampler = RandomOverSampler(random_state=42)
 # Fitting and applying the oversampling
 X_resampled, y_resampled = oversampler.fit_resample(X, y)
 
-
-# In[27]:
-
-
 # Checking the new class distribution
 print(pd.Series(y_resampled).value_counts())
-
-
-# #### Now as we have a balanced data, we are processing from step 4 again
-
-# In[28]:
-
 
 # Splitting the resampled dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42)
@@ -355,30 +290,22 @@ X_test_scaled = scaler.transform(X_test)
 # Training the Random Forest Classifier
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X_train_scaled, y_train)
-
 y_pred_rf = rf_model.predict(X_test_scaled)
 
 # Training the Support Vector Machine (SVM)
 svm_model = SVC(kernel='linear', C=1.0, random_state=42)
 svm_model.fit(X_train_scaled, y_train)
-
 y_pred_svm = svm_model.predict(X_test_scaled)
 
 # Training the K-Nearest Neighbors (KNN)
 knn_model = KNeighborsClassifier(n_neighbors=5)
 knn_model.fit(X_train_scaled, y_train)
-
 y_pred_knn = knn_model.predict(X_test_scaled)
 
 # Training the Naive Bayes
 nb_model = GaussianNB()
 nb_model.fit(X_train_scaled, y_train)
-
 y_pred_nb = nb_model.predict(X_test_scaled)
-
-
-# In[29]:
-
 
 # Evaluating the performance of Random Forest
 print("Random Forest Classifier Evaluation Metrics:")
@@ -412,13 +339,7 @@ print("Recall (Sensitivity):", recall_score(y_test, y_pred_nb, average='weighted
 print("Precision:", precision_score(y_test, y_pred_nb, average='weighted'))
 print("\n")
 
-
-# ## Performing Ensemble Techniques
-
 # ### Hard voting Ensemble combining 4 models
-
-# In[30]:
-
 
 # Combining individual models to form a Ensemble Model
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -436,7 +357,6 @@ ensemble_model = VotingClassifier(estimators=[
 
 # Fitting the ensemble model
 ensemble_model.fit(X_train_scaled, y_train)
-
 y_pred_ensemble = ensemble_model.predict(X_test_scaled)
 
 # Evaluate the ensemble model
@@ -448,9 +368,6 @@ print("Precision:", precision_score(y_test, y_pred_ensemble, average='weighted')
 
 
 # ### Soft voting ensemble combining 4 models
-
-# In[31]:
-
 
 # Combining individual models with probability estimates to form an Ensemble Model
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
@@ -468,7 +385,6 @@ ensemble_model = VotingClassifier(estimators=[
 
 # Fitting the ensemble model
 ensemble_model.fit(X_train_scaled, y_train)
-
 y_pred_ensemble = ensemble_model.predict(X_test_scaled)
 
 # Evaluate the ensemble model
@@ -477,15 +393,6 @@ print("F1 Score:", f1_score(y_test, y_pred_ensemble, average='weighted'))
 print("Accuracy:", accuracy_score(y_test, y_pred_ensemble))
 print("Recall (Sensitivity):", recall_score(y_test, y_pred_ensemble, average='weighted'))
 print("Precision:", precision_score(y_test, y_pred_ensemble, average='weighted'))
-
-
-# ### Visualization of Performance metrics using Grouped Bar chart
-
-# In[32]:
-
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Models and their respective perfromance metrics
 models = ['Random Forest', 'SVM', 'K-NN', 'Naive Bayes', 'Ensemble Hard-Voting', 'Ensemble Soft-Voting']
@@ -512,17 +419,10 @@ ax.set_title('Model Evaluation Metrics')
 ax.set_xticks(index + bar_width)
 ax.set_xticklabels(models)
 ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-
-# Show the plot
 plt.show()
 
+# #### * After visualizing the Grouped bar chart,
 
-# #### * After visualizing the Grouped bar chart, we consider Random Forest to be our best Model <br> * We wanted to assess the generaliziability and performance of our model further. <br> * To achieve this we have done HyperParameter Tuning and Cross validation on our best model. <br>
-
-# In[33]:
-
-
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
 # Performing Hyperparameter Tuning using GridSearchCV
 param_grid = {
@@ -552,10 +452,7 @@ print("\nCross-Validation Results:")
 print(cv_results[['param_n_estimators', 'param_max_depth', 'param_min_samples_split', 'param_min_samples_leaf', 'mean_test_score']])
 
 
-# #### Perfroming evalution metrics again on the Best model after Hyperparameter Tuning
-
-# In[35]:
-
+# evalution after Hyperparameter Tuning
 
 # Evaluate the best model on the test set
 y_pred_rf_tuned = best_rf_model.predict(X_test_scaled)
@@ -567,13 +464,6 @@ print("F1 Score:", f1_score(y_test, y_pred_rf_tuned, average='weighted'))
 print("Recall (Sensitivity):", recall_score(y_test, y_pred_rf_tuned, average='weighted'))
 print("Precision:", precision_score(y_test, y_pred_rf_tuned, average='weighted'))
 
-
-# In[36]:
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-
 # Metrics before hyperparameter tuning
 metrics_before_tuning = {
     'Accuracy': 0.953822134150003,
@@ -581,7 +471,6 @@ metrics_before_tuning = {
     'Recall': 0.953822134150003,
     'Precision': 0.9551815103634058
 }
-
 # Metrics after hyperparameter tuning
 metrics_after_tuning = {
     'Accuracy': 0.953822134150003,
@@ -607,49 +496,8 @@ ax.set_title('Random Forest Classifier Evaluation Metrics Before and After Hyper
 ax.set_xticks(index + bar_width / 2)
 ax.set_xticklabels(metrics_names)
 ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-
 plt.show()
 
-
-# #### After visualzing the above graph we can observe that there is no change in the performance metrics of our best model, before and after hyper parameter tuning
-#
-# #### Hence, we conclude that Our Best Model, Random forest's best performance metrics are <br>
-# <b>Accuracy =  0.953822134150003<br>
-#     F1 Score = 0.9519389979386549<br>
-#     Recall =  0.953822134150003<br>
-#     Precision = 0.9551815103634058</b>
-
-# ## Step 7: Saving the Model
-
-# In[37]:
-
-
-# Fitting the Random Forest Classifier
-rf_model.fit(X_train_scaled, y_train)
-
-# Saving the trained Random Forest model to a file
-joblib.dump(rf_model, 'random_forest_model.joblib')
-
-# Evaluating the model
-y_pred_rf = rf_model.predict(X_test_scaled)
-print("Random Forest Classifier:")
-print("Accuracy:", accuracy_score(y_test, y_pred_rf))
-
-
-# In[38]:
-
-
-# Initializing the RandomOverSampler
-oversampler = RandomOverSampler(random_state=42)
-
-# Fitting and applying the oversampling
-X_resampled, y_resampled = oversampler.fit_resample(X, y)
-
-# Saving the oversampler to a file
-joblib.dump(oversampler, 'oversampler.joblib')
-
-
-# In[ ]:
 
 
 
