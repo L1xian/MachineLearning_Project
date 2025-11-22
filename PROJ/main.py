@@ -1,5 +1,4 @@
 # Imports
-
 import re
 import numpy as np
 import pandas as pd
@@ -99,7 +98,6 @@ imputer = SimpleImputer(strategy='most_frequent')
 data[categorical_cols] = imputer.fit_transform(data[categorical_cols])
 # checking data integrity
 print(data.isnull().sum())
-
 # Label encoding for categorical variables
 label_encoder = LabelEncoder()
 for col in categorical_cols:
@@ -109,19 +107,16 @@ non_single_valued_columns = data.columns[data.nunique() > 1]
 filtered_data = data[non_single_valued_columns]
 
 ### 3: Feature Selection
-
 # using mutual information
 X = data.drop('Disaster Type', axis=1)
 y = data['Disaster Type']
 X['Year'] = X['Year'].astype(float) # including 'Year' feature
 mutual_info = mutual_info_classif(X, y)
 feature_importance = pd.Series(mutual_info, index=X.columns)
-
 # Selecting top 10 features
 selected_features = feature_importance.nlargest(10).index
 if 'Year' not in selected_features:
     selected_features = selected_features.append(pd.Index(['Year']))
-
 # Printing the selected features
 X_selected = X[selected_features]
 print(X_selected.columns)
@@ -153,9 +148,7 @@ rf_model = RandomForestClassifier(
 )
 rf_model.fit(X_train, y_train)
 y_pred = rf_model.predict(X_test)
-# Evaluation of the model
-print("Random Forest Classifier:")
-print("Accuracy:", accuracy_score(y_test, y_pred))
+
 
 # 2/K-NN
 X = data_selected.drop('Disaster Type', axis=1)
@@ -168,10 +161,6 @@ knn_model = KNeighborsClassifier(
 )
 knn_model.fit(X_train, y_train)
 y_pred_knn = knn_model.predict(X_test)
-# Evaluation of the KNN model
-print("K-Nearest Neighbors (KNN):")
-print("Accuracy:", accuracy_score(y_test, y_pred_knn))
-
 
 # 3/Navie Bayes
 X = data_selected.drop('Disaster Type', axis=1)
@@ -180,9 +169,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 nb_model = GaussianNB()
 nb_model.fit(X_train, y_train)
 y_pred_nb = nb_model.predict(X_test)
-# Evaluation of the Naive Bayes model
-print("Naive Bayes:")
-print("Accuracy:", accuracy_score(y_test, y_pred_nb))
 
 # Evaluating the performance of Random Forest
 print("Random Forest Classifier Evaluation Metrics:")
@@ -207,7 +193,6 @@ print("Recall (Sensitivity):", recall_score(y_test, y_pred_nb, average='weighted
 print("Precision:", precision_score(y_test, y_pred_nb, average='weighted'))
 print("\n")
 
-
 ### Step 6: Tuning
 # Checking the class distribution
 print(data_selected['Disaster Type'].value_counts())
@@ -218,7 +203,6 @@ y = data_selected['Disaster Type']
 oversampler = RandomOverSampler(random_state=42)
 # Fitting and applying the oversampling
 X_resampled, y_resampled = oversampler.fit_resample(X, y)
-
 # Checking the new class distribution
 print(pd.Series(y_resampled).value_counts())
 # Splitting the resampled dataset into training and testing sets
@@ -285,6 +269,22 @@ print("Accuracy:", accuracy_score(y_test, y_pred_ensemble))
 print("Recall (Sensitivity):", recall_score(y_test, y_pred_ensemble, average='weighted'))
 print("Precision:", precision_score(y_test, y_pred_ensemble, average='weighted'))
 
+# Creating a soft voting classifier
+ensemble_model = VotingClassifier(estimators=[
+    ('rf', rf_model),
+    ('knn', knn_model),
+    ('nb', nb_model)
+], voting='soft')
+# Fitting the ensemble model
+ensemble_model.fit(X_train_scaled, y_train)
+y_pred_ensemble = ensemble_model.predict(X_test_scaled)
+# Evaluate the ensemble model
+print("\nEnsemble Model (Hard Voting):")
+print("F1 Score:", f1_score(y_test, y_pred_ensemble, average='weighted'))
+print("Accuracy:", accuracy_score(y_test, y_pred_ensemble))
+print("Recall (Sensitivity):", recall_score(y_test, y_pred_ensemble, average='weighted'))
+print("Precision:", precision_score(y_test, y_pred_ensemble, average='weighted'))
+
 
 # Models and their respective perfromance metrics
 models = ['Random Forest', 'K-NN', 'Naive Bayes', 'Ensemble Hard-Voting', 'Ensemble Soft-Voting']
@@ -292,15 +292,17 @@ f1_scores = [0.9519, 0.9258, 0.6297, 0.91947, 0.93508 ]
 accuracies = [0.9538, 0.9313, 0.6532, 0.92361, 0.93905 ]
 recalls = [0.9538, 0.9313, 0.6532, 0.92361, 0.93905]
 precisions = [0.9552, 0.9316, 0.7167, 0.92917, 0.94320]
+
 bar_width = 0.2
 index = np.arange(len(models))
+
 fig, ax = plt.subplots(figsize=(14, 6))
 bar1 = ax.bar(index - bar_width, f1_scores, bar_width, label='F1 Score')
 bar2 = ax.bar(index, accuracies, bar_width, label='Accuracy')
 bar3 = ax.bar(index + bar_width, recalls, bar_width, label='Recall')
 bar4 = ax.bar(index + 2 * bar_width, precisions, bar_width, label='Precision')
 
-# Settign up the Legend and Title
+
 ax.set_xlabel('Models')
 ax.set_ylabel('Scores')
 ax.set_title('Model Evaluation Metrics')
