@@ -85,6 +85,7 @@ plt.show()
 
 
 ### 2: Data Preprocessing
+
 # 1/ Checking for Missing values
 print("Null values:")
 print(data.isnull().sum())
@@ -107,6 +108,7 @@ non_single_valued_columns = data.columns[data.nunique() > 1]
 filtered_data = data[non_single_valued_columns]
 
 ### 3: Feature Selection
+
 # using mutual information
 X = data.drop('Disaster Type', axis=1)
 y = data['Disaster Type']
@@ -130,8 +132,6 @@ data_selected.to_csv('preprocessed_data.csv', index=False)
 data_selected = pd.read_csv('preprocessed_data.csv')
 data_selected.head(10)
 print(data_selected.isnull().sum())
-
-
 
 ### 4: Model Development
 
@@ -185,6 +185,7 @@ print("Accuracy:", accuracy_score(y_test, y_pred_knn))
 print("Recall (Sensitivity):", recall_score(y_test, y_pred_knn, average='weighted'))
 print("Precision:", precision_score(y_test, y_pred_knn, average='weighted'))
 print("\n")
+
 # Evaluating the performance of Navie Bayes
 print("Navie Bayes-Evaluation Metrics:")
 print("F1 Score:", f1_score(y_test, y_pred_nb, average='weighted'))
@@ -194,6 +195,7 @@ print("Precision:", precision_score(y_test, y_pred_nb, average='weighted'))
 print("\n")
 
 ### Step 6: Tuning
+
 # Checking the class distribution
 print(data_selected['Disaster Type'].value_counts())
 # Separating feature set and target variable
@@ -213,6 +215,7 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 #Retrain
+
 # Training the Random Forest Classifier
 rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_model.fit(X_train_scaled, y_train)
