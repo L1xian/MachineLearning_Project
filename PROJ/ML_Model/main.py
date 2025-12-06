@@ -62,7 +62,7 @@ plt.show()
 
 # Visualizing correlation HeatMap for Numerical features
 plt.figure(figsize=(16, 10))
-correlation_matrix = data.corr()
+correlation_matrix = data.select_dtypes(include=np.number).corr()
 sns.heatmap(correlation_matrix, annot=True, cmap='magma', fmt='.2f')
 plt.title('Correlation Heatmap')
 plt.show()
@@ -273,20 +273,23 @@ print("Recall (Sensitivity):", recall_score(y_test, y_pred_ensemble, average='we
 print("Precision:", precision_score(y_test, y_pred_ensemble, average='weighted'))
 
 # Creating a soft voting classifier
-ensemble_model = VotingClassifier(estimators=[
+ensemble_model_soft = VotingClassifier(estimators=[
     ('rf', rf_model),
     ('knn', knn_model),
     ('nb', nb_model)
 ], voting='soft')
 # Fitting the ensemble model
-ensemble_model.fit(X_train_scaled, y_train)
-y_pred_ensemble = ensemble_model.predict(X_test_scaled)
+ensemble_model_soft.fit(X_train_scaled, y_train)
+y_pred_ensemble_soft = ensemble_model_soft.predict(X_test_scaled)
 # Evaluate the ensemble model
-print("\nEnsemble Model (Hard Voting):")
-print("F1 Score:", f1_score(y_test, y_pred_ensemble, average='weighted'))
-print("Accuracy:", accuracy_score(y_test, y_pred_ensemble))
-print("Recall (Sensitivity):", recall_score(y_test, y_pred_ensemble, average='weighted'))
-print("Precision:", precision_score(y_test, y_pred_ensemble, average='weighted'))
+print("\nEnsemble Model (Soft Voting):")
+print("F1 Score:", f1_score(y_test, y_pred_ensemble_soft, average='weighted'))
+print("Accuracy:", accuracy_score(y_test, y_pred_ensemble_soft))
+print("Recall (Sensitivity):", recall_score(y_test, y_pred_ensemble_soft, average='weighted'))
+print("Precision:", precision_score(y_test, y_pred_ensemble_soft, average='weighted'))
+
+# Save the trained model
+joblib.dump(ensemble_model_soft, 'disaster_prediction_model.joblib')
 
 
 # Models and their respective perfromance metrics
